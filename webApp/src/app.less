@@ -1,0 +1,153 @@
+
+:root:root {
+  --adm-color-primary: #a062d4;
+  /*--adm-button-border-radius:200px;*/
+  /*--adm-color-background: #fff;*/
+  /*--adm-color-success: #00b578;*/
+  /*--adm-color-warning: #ff8f1f;*/
+  /*--adm-color-danger: #ff3141;*/
+
+  /*--adm-color-white: #ffffff;*/
+  /*--adm-color-text: #333333;*/
+  /*--adm-color-text-secondary: #666666;*/
+  /*--adm-color-weak: #999999;*/
+  /*--adm-color-light: #cccccc;*/
+  /*--adm-color-border: #222;*/
+  /*--adm-color-box: #f5f5f5;*/
+
+  /*--adm-font-size-main: var(--adm-font-size-5);*/
+
+  /*--adm-font-family: -apple-system, blinkmacsystemfont, 'Helvetica Neue',*/
+  /*helvetica, segoe ui, arial, roboto, 'PingFang SC', 'miui',*/
+  /*'Hiragino Sans GB', 'Microsoft Yahei', sans-serif;*/
+
+}
+.purple-theme {
+  --adm-color-primary: #a062d4;
+  --adm-button-border-radius:200px;
+}
+.grid-demo-item-block {
+  border: solid 1px #999999;
+  background: var(--adm-color-box);
+  text-align: center;
+  color: #999999;
+  height: 100%;
+}
+.app2 {
+
+  display: flex;
+  height: 100vh;
+  flex-direction: column;
+  /*min-height: 100vh;*/
+  /*position: relative;*/
+}
+
+.top2 {
+  flex: 0;
+  /*border-bottom: solid 21px var(--adm-color-border);*/
+}
+.radar2 {
+  width: 200px;
+  flex: 2;
+  /*border-bottom: solid 21px var(--adm-color-border);*/
+}
+.body2 {
+  display: flex;
+  flex: 2;
+  /*justify-content: space-around;*/
+  justify-content: space-between;
+  /*justify-content: center;*/
+  /*width: 100vw;*/
+  /*align-items: center;*/
+  padding:10px;
+  /*border: 1px solid red;*/
+
+}
+
+.footer2 {
+  /*display: flex;*/
+  /*flex: 0;*/
+  /*justify-content: space-around;*/
+  top: calc(100% - 110px);
+  /*width: 100%;*/
+  /*border-top: solid 11px var(--adm-color-border);*/
+  position: sticky;
+  /*position: absolute;*/
+  /*bottom: 0px;*/
+  /*right: 0px;*/
+  /*left: 0px;*/
+  /*position2: fixed;*/
+  /*min-height: 100px;*/
+  /*position: sticky;*/
+  bottom: 0;
+  /*border: 1px solid red;*/
+}
+.cardContent2 {
+  height: 250px;
+  color: #eee;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 48px;
+  user-select: none;
+}
+.content2 {
+  /*height: 250px;*/
+  color: #aaa;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 14px;
+  user-select: none;
+}
+.extraPart2 {
+  border-left: solid 1px #eeeeee;
+  padding-left: 12px;
+  font-size: 17px;
+  line-height: 22px;
+}
+.eye2 {
+  padding: 4px;
+  cursor: pointer;
+  svg {
+    display: block;
+    font-size: var(--adm-font-size-7);
+  }
+}
+.contentCard {
+  height: 150px;
+  text-decoration-color: #0f5132;
+  text-align: center;
+}
+
+.footer22 {
+  padding-top: 11px;
+  border-top: 1px solid #e5e5e5;
+  display: flex;
+  justify-content: flex-end;
+
+}
+
+.customBody {
+  color: var(--adm-color-success);
+}
+/*.title {*/
+/*  color: @ heading-color;*/
+/*  font-weight: 600;*/
+/*  margin-bottom: 16px;*/
+/*}*/
+
+/* Define the global style */
+:global (.text) {
+  font-size: 16px;
+}
+
+/* Define multiple global styles */
+/*:global {*/
+/*  .footer {*/
+/*    color: #ccc;*/
+/*  }*/
+/*  .sider {*/
+/*    background: #ebebeb;*/
+/*  }*/
+/*}*/
