@@ -13,11 +13,11 @@ import {
     Space,
     Swiper,
     Switch,
-    TabBar,
+    TabBar, Selector,
     Tag, TextArea,
-    Toast,Grid
+    Toast, Grid
 } from 'antd-mobile';
-import { Skeleton } from 'antd-mobile'
+import {Skeleton} from 'antd-mobile'
 import {
     AaOutline,
     AntOutline,
@@ -34,7 +34,7 @@ import {Line} from "@ant-design/charts";
 import {WebsocketClientR} from "./WebsocketClientR.js";
 import * as Tone from "tone";
 import 'react-piano/dist/styles.css';
-import { Piano, KeyboardShortcuts, MidiNumbers } from 'react-piano';
+import {Piano, KeyboardShortcuts, MidiNumbers} from 'react-piano';
 import {QRCode} from 'antd';
 
 const firstNote = MidiNumbers.fromNote('c3');
@@ -47,8 +47,9 @@ const keyboardShortcuts = KeyboardShortcuts.create({
 const doremi = ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5']
 const synth = new Tone.Synth().toDestination();
 const useStore = create((set) => ({
-    RX_JSON:{},RX_TS:0, WSs_IDs: new Set(),
-    Songs:['望春風','蝴蝶','造飛機','三輪車跑得快','野玫瑰','鱒魚','倫敦鐵橋垮下來','歡樂頌'],
+    RX_JSON: {}, RX_TS: 0, WSs_IDs: new Set(),
+    Songs: ['望春風', '蝴蝶', '造飛機', '三輪車跑得快', '野玫瑰', '鱒魚', '倫敦鐵橋垮下來', '歡樂頌'],
+    WhichSongIndex: -1,
     setWSs_IDs: (rx_id) => set((state) => ({count: state.WSs_IDs.add(rx_id)})),
     status_allJson_TS: 0,
     chartDataFPS: [
@@ -73,7 +74,7 @@ const useStore = create((set) => ({
     updateBears: (newBears) => set({bears: newBears}),
 }));
 
-let INIT_MQTT=true;
+let INIT_MQTT = true;
 let websocketClientR = undefined;
 let WSS_ID_RANDOM = "9999";
 setInterval(clock1000, 1000);
@@ -84,10 +85,15 @@ function on_msg_from_WSC(data) {
         // ARG_INFO.FPS=data2JSON.FPS;
         // ARG_INFO.WSs=data2JSON.WSs;
         let J = JSON.parse(data);
+
         useStore.setState({RX_JSON: J});
-        useStore.getState().setWSs_IDs(J.ID );
+        useStore.getState().setWSs_IDs(J.ID);
         useStore.setState({RX_TS: Date.now()});
         useStore.getState().increaseFPSchart();
+        if(J.hasOwnProperty('CUE')&&J['CUE'].split('/')[2]==='SONG'){
+            let cued_song_index=parseInt(J['CUE'].split('/')[3])
+            useStore.setState({WhichSongIndex: cued_song_index});
+        }
 
     } catch (e) {
         return console.error("[X][RC][on_msg_from_WSC]", data.toString(), e); // error in the above string (in this case, yes)!
@@ -95,83 +101,85 @@ function on_msg_from_WSC(data) {
 }
 
 function clock1000() {
-    if(INIT_MQTT){
-        INIT_MQTT=false;
-        const NOW=new Date();
+    if (INIT_MQTT) {
+        INIT_MQTT = false;
+        const NOW = new Date();
         WSS_ID_RANDOM = "[AWS_LAMBDA][DECADE.TW]:" + NOW.getTime();
-        websocketClientR = new WebsocketClientR(this, useStore.getState().MQTT_URL,WSS_ID_RANDOM, on_msg_from_WSC);
+        websocketClientR = new WebsocketClientR(this, useStore.getState().MQTT_URL, WSS_ID_RANDOM, on_msg_from_WSC);
 
-        console.log("[disable][decade.tw][module-websocket]" );
-        console.log("[enable][decade.tw][module-mqtt]",useStore.getState().MQTT_URL );
+        console.log("[disable][decade.tw][module-websocket]");
+        console.log("[enable][decade.tw][module-mqtt]", useStore.getState().MQTT_URL);
 
         return
     }
 
-    if (websocketClientR!==undefined&&websocketClientR.readyStatusX) {
+    if (websocketClientR !== undefined && websocketClientR.readyStatusX) {
         let outMsg = {
             TS: Date.now(),
             WHO: "RC",
-            TX: "/CUE/WSS/ECHO",
+            CUE: "/CUE/WSS/ECHO",
             ID: WSS_ID_RANDOM,
         };
-        websocketClientR.sendMsgX(  JSON.stringify(outMsg));
+        websocketClientR.sendMsgX(JSON.stringify(outMsg));
         useStore.setState({ws_readyStatus: websocketClientR.isReady});
     }
 }
 
+function handleClickRC(e) {
+    // let index=useStore.getState().Songs.findIndex((w)=>{return w===e[0]})
+    let index = parseInt(e[0])
+    console.log("[handleClickRC]", e, index);
+    useStore.setState({WhichSongIndex: index});
 
-function WS_OK_NG_DOM() {
-    const storeX = useStore((state) => state.ws_readyStatus)
+    let d = {
+        CUE: "/CUE/SONG/" + index,
+        WHO: "RC",
+        ID: WSS_ID_RANDOM,
+        TS: Date.now(),
+    };
+    let j = JSON.stringify(d);
+    websocketClientR.sendMsgX(j);
+    synth.triggerAttackRelease(doremi[index], "8n");
+}
+
+function ButtonRC() {
+    // constructor(props) {
+    //     super(props);
+    //     this.state = ({props: props, clickCount: 0})
+    // }
     return (
-        <div style={{'float': 'right', 'borderRadius': '6px', 'fontSize': '23px'}}>
-            {storeX === 1 ? "✅" : "❌"}
-        </div>
+        <>
+            {/*// <Button style={{'width': '99%'}} size={"large"} onClick={this.handleClickRC} color={this.props.color} fill={this.props.fill} shape={this.props.shape}>*/}
+            {/*//     {this.props.showText ? this.props.showText : this.props.id}*/}
+            {/*// </Button>*/}
+            <Selector style={{
+                '--border-radius': '10px',
+                '--border': 'solid transparent 1px',
+                '--checked-border': 'solid var(--adm-color-primary) 1px',
+                '--padding': '8px 24px',
+                '--color': 'var(--adm-color-primary)',
+
+            }}
+                      value={[useStore.getState().WhichSongIndex]}
+                      columns={1}
+                      multiple={false}
+                      showCheckMark={true}
+                      options={
+                          useStore.getState().Songs.map((e, index) => {
+                                  return {label: e, value: index}
+                              }
+                          )}
+                      onChange={(e) => handleClickRC(e)}>
+
+            </Selector>
+        </>
     );
+
 }
-
-function OK_NG_DOM() {
-    const storeX = useStore((state) => state.status_allJson_TS)
-
-    return (
-        <div style={{'float': 'right', 'borderRadius': '6px', 'fontSize': '23px'}}>
-            {Date.now() - storeX === 0 ? "✅" : "❌"}
-        </div>
-    );
-}
-
-class ButtonRC extends React.Component {
-    constructor(props) {
-        super(props);
-        this.state = ({props: props, clickCount: 0})
-    }
-    handleClickRC = (e) => {
-        console.log("[handleClickRC]", e,this.state);
-        this.setState({clickCount: this.state.clickCount + 1})
-        let d = {
-            TX: "/CUE/SONG/" + this.props.id,
-            WHO: "RC",
-            ID: WSS_ID_RANDOM,
-            TS: Date.now(),
-        };
-        let j = JSON.stringify(d);
-        websocketClientR.sendMsgX(j);
-        synth.triggerAttackRelease(doremi[parseInt(this.state.props.id.split('_')[1])], "8n");
-    }
-    render() {
-        return (
-            <Button style={{'width': '99%'}} size={"large"} onClick={this.handleClickRC} color={this.props.color} fill={this.props.fill} shape={this.props.shape}>
-                {this.props.showText ? this.props.showText : this.props.id}
-            </Button>
-        )
-    }
-}
-
-
-
 
 
 function FpsDOM() {
-    const { WSs_IDs, RX_TS } = useStore()
+    const {WSs_IDs, RX_TS} = useStore()
 
     // function updateFps() {
     //   setFps(ARG_INFO.fps);
@@ -179,12 +187,12 @@ function FpsDOM() {
     return (
         <span>
 
-            { WSs_IDs.size >= 1 ? "✅" : "❌"} 遙控器人數:{ WSs_IDs.size} |
-            {(Date.now() -  RX_TS) > 2000 ? "❌" : "✅"}延遲 {(Date.now() -  RX_TS) + "ms"}
+            {WSs_IDs.size >= 1 ? "✅" : "❌"} 遙控器人數:{WSs_IDs.size} |
+            {(Date.now() - RX_TS) > 2000 ? "❌" : "✅"}延遲 {(Date.now() - RX_TS) + "ms"}
     </span>
     );
 };
-const BottomNaviBar= () => {
+const BottomNaviBar = () => {
     const history = useNavigate();
     const location = useLocation();
     const {pathname} = location;
@@ -280,15 +288,28 @@ const LineChartX = () => {
 
 function App() {
     document.documentElement.setAttribute(
-      'data-prefers-color-scheme',
-      'dark'
+        'data-prefers-color-scheme',
+        'dark'
     );
     const [argod_fps] = useState({fps: -1, x: 0, y: 0});
-
+    const RadioMode = () => {
+        const [value, setValue] = useState('1')
+        return (
+            <Selector
+                options={options}
+                value={[value]}
+                onChange={v => {
+                    if (v.length) {
+                        setValue(v[0])
+                    }
+                }}
+            />
+        )
+    }
     return (
         <>
             <div className={'app2'}>
-                <NavBar className={ 'top2'} back='' onBack={back} backArrow={false}>
+                <NavBar className={'top2'} back='' onBack={back} backArrow={false}>
                     Vision of The Harmonics
                 </NavBar>
 
@@ -306,7 +327,7 @@ function App() {
                     {items}
                 </Swiper>
                 <NoticeBar content={<Marquee gradient={false}>
-                    Vision of The Harmonics {' | '+useStore().Songs.join(' | ')}
+                    Vision of The Harmonics {' | ' + useStore().Songs.join(' | ')}
                 </Marquee>} color='gray'/>
 
 
@@ -333,28 +354,31 @@ function App() {
 }
 
 
-
-function Tab1(argod_fps) {
+function Tab1() {
     return (<>
         <Divider>About Artwork</Divider>
 
         <Card
-            icon={<AaOutline  style={{ color: '#fff' }} />}
-            title={<div style={{ fontWeight: 'normal' }}>Vision of the Harmonics</div>}
-            extra={<RightOutline />}
-            onBodyClick={()=>{}}
-            onHeaderClick={()=>{}}
-            style={{ margin:'15px',borderRadius: '16px' }}
+            icon={<AaOutline style={{color: '#fff'}}/>}
+            title={<div style={{fontWeight: 'normal'}}>Vision of the Harmonics</div>}
+            extra={<RightOutline/>}
+            onBodyClick={() => {
+            }}
+            onHeaderClick={() => {
+            }}
+            style={{margin: '15px', borderRadius: '16px'}}
         >
-            <div  >
+            <div>
                 作品介紹BRABRA
-                <Skeleton.Title animated />
-                <Skeleton.Paragraph lineCount={8} animated />
+                <Skeleton.Title animated/>
+                <Skeleton.Paragraph lineCount={8} animated/>
             </div>
-            <div className={{ 'paddingTop': '11px' ,
-                'borderTop': '1px solid #e5e5e5' ,
-                'display': 'flex' ,
-                'justifyCcontent': 'flex-end',}} onClick={e => e.stopPropagation()}>
+            <div className={{
+                'paddingTop': '11px',
+                'borderTop': '1px solid #e5e5e5',
+                'display': 'flex',
+                'justifyCcontent': 'flex-end',
+            }} onClick={e => e.stopPropagation()}>
 
             </div>
         </Card>
@@ -364,7 +388,6 @@ function Tab1(argod_fps) {
 }
 
 function Tab2() {
-    const { Songs } = useStore()
 
     return <>
         <FpsDOM/>
@@ -372,25 +395,28 @@ function Tab2() {
 
         {/*<Divider contentPosition='right'>今天想聽點甚麼呢?<HistogramOutline fontSize={22}/> </Divider>*/}
         <Card
-            icon={<AaOutline  style={{ color: '#fff' }} />}
-            title={<div style={{ fontWeight: 'normal' }}>今天想聽點甚麼呢?</div>}
-            extra={<RightOutline />}
-            onBodyClick={()=>{}}
-            onHeaderClick={()=>{}}
-            style={{ margin:'15px',borderRadius: '16px' }}
+            icon={<AaOutline style={{color: '#fff'}}/>}
+            title={<div style={{fontWeight: 'normal'}}>今天想聽點甚麼呢?</div>}
+            extra={<RightOutline/>}
+            onBodyClick={() => {
+            }}
+            onHeaderClick={() => {
+            }}
+            style={{margin: '15px', borderRadius: '16px'}}
         >
             <Grid columns={1} gap={10}>
 
-                {Songs.map((item, index) => {
-                        return <ButtonRC color='primary' key={'key_'+item} showText={item} id={'song_' + index}/>
-                    }
-                )}
+                <ButtonRC/>
+                {/*{Songs.map((item, index) => {*/}
+                {/*        return <ButtonRC color='primary' key={'key_'+item} showText={item} id={'song_' + index}/>*/}
+                {/*    }*/}
+                {/*)}*/}
 
             </Grid>
         </Card>
         <Divider contentPosition='right'> </Divider>
         <Piano
-            noteRange={{ first: firstNote, last: lastNote }}
+            noteRange={{first: firstNote, last: lastNote}}
             playNote={(midiNumber) => {
                 // Play a given note - see notes below
             }}
@@ -409,19 +435,22 @@ function Tab3() {
 
         {/*<LineChartX style={{background:'#fff'}}/>*/}
         <Divider>Log Panel - MQTT</Divider>
-        <iframe src="https://vision-of-the-harmonics.cloud.shiftr.io/embed?widgets=1" style={{transform: 'scale(1)'}} width="100%" height="500px"
+        <iframe src="https://vision-of-the-harmonics.cloud.shiftr.io/embed?widgets=1" style={{transform: 'scale(1)'}}
+                width="100%" height="500px"
                 frameBorder="0"
                 allowFullScreen></iframe>
         <Divider>Log Panel</Divider>
         <Card
-            icon={<AaOutline  style={{ color: '#fff' }} />}
-            title={<div style={{ fontWeight: 'normal' }}>Vision of the Harmonics</div>}
-            extra={<RightOutline />}
-            onBodyClick={()=>{}}
-            onHeaderClick={()=>{}}
-            style={{ margin:'15px',borderRadius: '16px' }}
+            icon={<AaOutline style={{color: '#fff'}}/>}
+            title={<div style={{fontWeight: 'normal'}}>Vision of the Harmonics</div>}
+            extra={<RightOutline/>}
+            onBodyClick={() => {
+            }}
+            onHeaderClick={() => {
+            }}
+            style={{margin: '15px', borderRadius: '16px'}}
         >
-           <TextArea>{JSON.stringify(useStore().RX_JSON)}</TextArea>
+            <TextArea>{JSON.stringify(useStore().RX_JSON)}</TextArea>
         </Card>
     </>
 }
@@ -432,15 +461,17 @@ function Tab4() {
     return <>
         <Divider>ARGod Setup</Divider>
         <Card
-            icon={<AaOutline  style={{ color: '#fff' }} />}
-            title={<div style={{ fontWeight: 'normal' }}>QR COde</div>}
-            extra={<RightOutline />}
-            onBodyClick={()=>{}}
-            onHeaderClick={()=>{}}
-            style={{ margin:'15px',borderRadius: '16px' }}
+            icon={<AaOutline style={{color: '#fff'}}/>}
+            title={<div style={{fontWeight: 'normal'}}>QR COde</div>}
+            extra={<RightOutline/>}
+            onBodyClick={() => {
+            }}
+            onHeaderClick={() => {
+            }}
+            style={{margin: '15px', borderRadius: '16px'}}
         >
             <Space direction={"vertical"}>
-                <QRCode style={{"backgroundColor":"white"}} value={text || '-'} />
+                <QRCode style={{"backgroundColor": "white"}} value={text || '-'}/>
                 <Input
                     placeholder="-"
                     maxLength={60}
