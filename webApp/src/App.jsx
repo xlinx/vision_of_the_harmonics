@@ -44,8 +44,16 @@ const keyboardShortcuts = KeyboardShortcuts.create({
     lastNote: lastNote,
     keyboardConfig: KeyboardShortcuts.HOME_ROW,
 });
+const aaa={a:'',aa:''};
+const MQTT_OPTIONS_shiftr= {
+    host:  "wss://vision-of-the-harmonics:rdGwsbIuoNx2sQin@vision-of-the-harmonics.cloud.shiftr.io"
+}
+const MQTT_OPTIONS_hivemq= {
+    host: "wss://xlinx:xlinxO13xlinx@184094d58f1e443fa48fc9f999bfe0de.s1.eu.hivemq.cloud:8884/mqtt",
+}
 const doremi = ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5']
 const synth = new Tone.Synth().toDestination();
+
 const useStore = create((set) => ({
     RX_JSON: {}, RX_TS: 0, WSs_IDs: new Set(),
     Songs: ['望春風', '蝴蝶', '造飛機', '三輪車跑得快', '野玫瑰', '鱒魚', '倫敦鐵橋垮下來', '歡樂頌'],
@@ -57,8 +65,7 @@ const useStore = create((set) => ({
     ],
     inc: () => set((state) => ({count: state.count + 1})),
     bears: 0,
-    MQTT_URL: "wss://vision-of-the-harmonics:rdGwsbIuoNx2sQin@vision-of-the-harmonics.cloud.shiftr.io",
-    // MQTT_URL: "wss://harmonics:EPk0PLcYoHzdDKt8@public.cloud.shiftr.io",
+    MQTT_OPTIONS:MQTT_OPTIONS_hivemq,
     ws_readyStatus: -2,
     increaseFPSchart: () => set((state) => ({
         chartDataFPS: [
@@ -105,10 +112,10 @@ function clock1000() {
         INIT_MQTT = false;
         const NOW = new Date();
         WSS_ID_RANDOM = "[AWS_LAMBDA][DECADE.TW]:" + NOW.getTime();
-        websocketClientR = new WebsocketClientR(this, useStore.getState().MQTT_URL, WSS_ID_RANDOM, on_msg_from_WSC);
+        websocketClientR = new WebsocketClientR(this, useStore.getState().MQTT_OPTIONS, WSS_ID_RANDOM, on_msg_from_WSC);
 
         console.log("[disable][decade.tw][module-websocket]");
-        console.log("[enable][decade.tw][module-mqtt]", useStore.getState().MQTT_URL);
+        console.log("[enable][decade.tw][module-mqtt]", useStore.getState().MQTT_OPTIONS);
 
         return
     }

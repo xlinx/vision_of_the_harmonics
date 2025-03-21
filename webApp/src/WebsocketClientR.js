@@ -11,33 +11,42 @@ export class WebsocketClientR {
     this.WHERE = WHERE ;
     this.TOPIC='CMD';
     this.WSS_ID_RANDOM=WSS_ID_RANDOM
+    this.mqttX=undefined
   }
   readyStatusX(){
 
-    if(this.mqtt===undefined||!(this.mqtt.connected))
+    if(this.mqttX===undefined||!(this.mqttX.connected))
       return false;
     else
       return true
   }
   sendMsgX(msg,newTOPIC=this.TOPIC){
-    if(this.mqtt===undefined){
-      this.mqtt=this.initMQTT();
+    if(this.mqttX===undefined){
+      this.mqttX=this.initMQTT();
     }else{
-      this.mqtt.publish(newTOPIC, msg);
+      this.mqttX.publish(newTOPIC, msg);
     }
   }
   initMQTT(){
-    let mqtt_client=this.mqtt
     if(this.maxReconnect>0){
-      console.log("[MQTT][on open]this.ss.maxReconnect=",this.maxReconnect);
-      mqtt_client= mqtt.connect(this.WHERE, {
-        clientId: this.WSS_ID_RANDOM,
-      });
+      console.log("[MQTT][init]this.ss.maxReconnect=",this.maxReconnect);
+      // if(this.WHERE.host.includes('shiftr.io')) {
+      //   console.log("[MQTT][on connect][shiftr.io]",this.maxReconnect);
+      //   this.mqttX = mqtt.connect(this.WHERE.host, {
+      //     clientId: this.WSS_ID_RANDOM
+      //   });
+      // }else {
+      //   console.log("[MQTT][on connect][hivemq]",this.maxReconnect);
+      //   this.mqttX = mqtt.connect( this.WHERE);
+      // }
+      this.mqttX = mqtt.connect( this.WHERE.host);
 
-      mqtt_client.on("connect", () => {
-        mqtt_client.subscribe(this.TOPIC, (err) => {
+      this.mqttX.on("connect", () => {
+        console.log('[MQTT]Connected',this.WHERE.host);
+
+        this.mqttX.subscribe(this.TOPIC, (err) => {
           if (!err) {
-            mqtt_client.publish(this.TOPIC, JSON.stringify({
+            this.mqttX.publish(this.TOPIC, JSON.stringify({
               TS: Date.now(),
               WHO: "RC",
               TX: "INIT",
@@ -46,16 +55,18 @@ export class WebsocketClientR {
           }
         });
       });
-
-      mqtt_client.on("message", (topic, message) => {
+      this.mqttX.on('error', function (error) {
+        console.log('[MQTT]error',this.WHERE.host);
+      });
+      this.mqttX.on("message", (topic, message) => {
         // message is Buffer
-        // console.log(new Date().toISOString(),"MY_ID",this.WSS_ID_RANDOM,"RX",message.toString());
+        console.log(new Date().toISOString(),"MY_ID",this.WSS_ID_RANDOM,"RX",message.toString());
         this.callBack(message)
       });
 
     }
     this.maxReconnect--;
-    return mqtt_client;
+    return this.mqttX;
 
 
   }
