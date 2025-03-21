@@ -14,8 +14,8 @@ import {
     Swiper,
     Switch,
     TabBar,
-    Tag,
-    Toast
+    Tag, TextArea,
+    Toast,Grid
 } from 'antd-mobile';
 import { Skeleton } from 'antd-mobile'
 import {
@@ -32,8 +32,20 @@ import {
 import Marquee from 'react-fast-marquee';
 import {Line} from "@ant-design/charts";
 import {WebsocketClientR} from "./WebsocketClientR.js";
+import * as Tone from "tone";
+import 'react-piano/dist/styles.css';
+import { Piano, KeyboardShortcuts, MidiNumbers } from 'react-piano';
+import {QRCode} from 'antd';
 
-
+const firstNote = MidiNumbers.fromNote('c3');
+const lastNote = MidiNumbers.fromNote('f5');
+const keyboardShortcuts = KeyboardShortcuts.create({
+    firstNote: firstNote,
+    lastNote: lastNote,
+    keyboardConfig: KeyboardShortcuts.HOME_ROW,
+});
+const doremi = ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5']
+const synth = new Tone.Synth().toDestination();
 const useStore = create((set) => ({
     RX_JSON:{},RX_TS:0, WSs_IDs: new Set(),
     Songs:['望春風','蝴蝶','造飛機','三輪車跑得快','野玫瑰','鱒魚','倫敦鐵橋垮下來','歡樂頌'],
@@ -130,14 +142,10 @@ function OK_NG_DOM() {
 class ButtonRC extends React.Component {
     constructor(props) {
         super(props);
-
         this.state = ({props: props, clickCount: 0})
-        // this.handleClickRC = this.handleClickRC.bind(this)
-
     }
-
     handleClickRC = (e) => {
-        console.log("[handleClickRC]", this.props);
+        console.log("[handleClickRC]", e,this.state);
         this.setState({clickCount: this.state.clickCount + 1})
         let d = {
             TX: "/CUE/SONG/" + this.props.id,
@@ -147,11 +155,11 @@ class ButtonRC extends React.Component {
         };
         let j = JSON.stringify(d);
         websocketClientR.sendMsgX(j);
+        synth.triggerAttackRelease(doremi[parseInt(this.state.props.id.split('_')[1])], "8n");
     }
-
     render() {
         return (
-            <Button onClick={this.handleClickRC} color={this.props.color} fill={this.props.fill} shape={this.props.shape}>
+            <Button style={{'width': '99%'}} size={"large"} onClick={this.handleClickRC} color={this.props.color} fill={this.props.fill} shape={this.props.shape}>
                 {this.props.showText ? this.props.showText : this.props.id}
             </Button>
         )
@@ -163,8 +171,6 @@ class ButtonRC extends React.Component {
 
 
 function FpsDOM() {
-    // const storeX = useStore((state) => state.status_allJson);
-    // const storeX2 = useStore((state) => state.status_allJson_TS);
     const { WSs_IDs, RX_TS } = useStore()
 
     // function updateFps() {
@@ -189,22 +195,22 @@ const BottomNaviBar= () => {
 
     const tabs = [
         {
-            key: '/home',
+            key: '/tab1',
             title: 'Vision of The Harmonics',
             icon: <AppOutline/>,
         },
         {
-            key: '/todo',
+            key: '/tab2',
             title: 'Remote Control',
             icon: <UnorderedListOutline/>,
         },
         {
-            key: '/message',
+            key: '/tab3',
             title: 'Device Log',
             icon: <MessageOutline/>,
         },
         {
-            key: '/me',
+            key: '/tab4',
             title: 'Special',
             icon: <UserOutline/>,
         },
@@ -226,10 +232,10 @@ const back = () =>
 
 
 const colors = ['#ace0ff', '#bcffbd', '#e4fabd', '#ffcfac'];
-const imgss = ['https://d3d9mb8xdsbq52.cloudfront.net/s3/240508/104314tud.jpg',
-    'https://d3d9mb8xdsbq52.cloudfront.net/s3/240508/104301erw.jpg',
-    'https://d3d9mb8xdsbq52.cloudfront.net/s3/240508/104254nwz.jpg',
-    'https://d3d9mb8xdsbq52.cloudfront.net/s3/240508/104402szw.jpg']
+const imgss = ['https://i.imgur.com/obZ3VYq.png',
+    'https://i.imgur.com/LOid4rn.png',
+    'https://i.imgur.com/obZ3VYq.png',
+    'https://i.imgur.com/LOid4rn.png']
 const items = colors.map((color, index) => (
     <Swiper.Item key={index}>
         <div
@@ -305,11 +311,11 @@ function App() {
 
 
                 <Routes>
-                    <Route path='/home' element={<Home/>}/>
-                    <Route path='/todo' element={<Todo/>}/>
-                    <Route path='/message' element={<Message/>}/>
-                    <Route path='/me' element={<PersonalCenter/>}/>
-                    <Route path='*' element={<Home/>}/>
+                    <Route path='/tab1' element={<Tab1/>}/>
+                    <Route path='/tab2' element={<Tab2/>}/>
+                    <Route path='/tab3' element={<Tab3/>}/>
+                    <Route path='/tab4' element={<Tab4/>}/>
+                    <Route path='*' element={<Tab2/>}/>
                     {/*<Route path='/notfound' element={<NoFound/>}/>*/}
                 </Routes>
                 <FloatingPanel anchors={[window.innerHeight * 0.1]}>
@@ -328,7 +334,7 @@ function App() {
 
 
 
-function Home(argod_fps) {
+function Tab1(argod_fps) {
     return (<>
         <Divider>About Artwork</Divider>
 
@@ -357,67 +363,96 @@ function Home(argod_fps) {
     </>)
 }
 
-function Todo() {
+function Tab2() {
     const { Songs } = useStore()
 
     return <>
-        <Divider>Control Status Info</Divider>
         <FpsDOM/>
 
 
-        <Divider contentPosition='right'>今天想聽點甚麼呢?<HistogramOutline
-            fontSize={32}/><Tag round color='#2db7f5' children={"NOW=> All"}/> </Divider>
-        <Space wrap align='center' style={{'--gap': '3px'}}>
-            {Songs.map((item, index) => {
-                return <ButtonRC color='primary' key={'key_'+item} showText={item} id={'song_' + index}/>
-                }
-            )}
+        {/*<Divider contentPosition='right'>今天想聽點甚麼呢?<HistogramOutline fontSize={22}/> </Divider>*/}
+        <Card
+            icon={<AaOutline  style={{ color: '#fff' }} />}
+            title={<div style={{ fontWeight: 'normal' }}>今天想聽點甚麼呢?</div>}
+            extra={<RightOutline />}
+            onBodyClick={()=>{}}
+            onHeaderClick={()=>{}}
+            style={{ margin:'15px',borderRadius: '16px' }}
+        >
+            <Grid columns={1} gap={10}>
 
-        </Space>
-        <Divider contentPosition='right'>美食 | 兒童 | 環保 | 科技 | 族群 | 宗教 | 桃花 <PicturesOutline fontSize={32}/><Tag
-            round color='#2db7f5' children={"NOW=> 美食"}/></Divider>
-        <Space wrap style={{'--gap': '12px'}}>
-            <ButtonRC color='warning' showText="V1" id="RC_VIDEO_1"/>
-            <ButtonRC color='warning' showText="V2" id="RC_VIDEO_2"/>
-            <ButtonRC color='warning' showText="V3" id="RC_VIDEO_3"/>
-            <ButtonRC color='warning' showText="V4" id="RC_VIDEO_4"/>
-            <ButtonRC color='warning' showText="V5" id="RC_VIDEO_5"/>
-            <ButtonRC color='warning' showText="V6" id="RC_VIDEO_6"/>
-        </Space>
-        <Divider contentPosition='right'>早 | 中 | 午 | 晚 切換 <PieOutline fontSize={32}/> <Tag round color='#2db7f5'
-                                                                                                 children={"NOW=> 早"}/></Divider>
-        <Space wrap style={{'--gap': '24px'}}>
-            <ButtonRC block shape='rounded' fill='outline' color='success' showText="早" id="RC_TIMEBK_green"/>
-            <ButtonRC block shape='rounded' fill='outline' color='warning' showText="中" id="RC_TIMEBK_yellow"/>
-            <ButtonRC block shape='rounded' fill='outline' color='warning' showText="午" id="RC_TIMEBK_orange"/>
-            <ButtonRC block shape='rounded' fill='outline' color='danger' showText="晚" id="RC_TIMEBK_red"/>
+                {Songs.map((item, index) => {
+                        return <ButtonRC color='primary' key={'key_'+item} showText={item} id={'song_' + index}/>
+                    }
+                )}
 
-        </Space>
+            </Grid>
+        </Card>
+        <Divider contentPosition='right'> </Divider>
+        <Piano
+            noteRange={{ first: firstNote, last: lastNote }}
+            playNote={(midiNumber) => {
+                // Play a given note - see notes below
+            }}
+            stopNote={(midiNumber) => {
+                // Stop playing a given note - see notes below
+            }}
+            // widthth={"100%"}
 
-
+            keyboardShortcuts={keyboardShortcuts}
+        />
     </>
 }
 
-function Message() {
+function Tab3() {
     return <>
-        <Divider>Log Panel - Connection</Divider>
-        <LineChartX style={{background:'#fff'}}/>
+
+        {/*<LineChartX style={{background:'#fff'}}/>*/}
         <Divider>Log Panel - MQTT</Divider>
         <iframe src="https://vision-of-the-harmonics.cloud.shiftr.io/embed?widgets=1" style={{transform: 'scale(1)'}} width="100%" height="500px"
                 frameBorder="0"
                 allowFullScreen></iframe>
         <Divider>Log Panel</Divider>
-
+        <Card
+            icon={<AaOutline  style={{ color: '#fff' }} />}
+            title={<div style={{ fontWeight: 'normal' }}>Vision of the Harmonics</div>}
+            extra={<RightOutline />}
+            onBodyClick={()=>{}}
+            onHeaderClick={()=>{}}
+            style={{ margin:'15px',borderRadius: '16px' }}
+        >
+           <TextArea>{JSON.stringify(useStore().RX_JSON)}</TextArea>
+        </Card>
     </>
 }
 
-function PersonalCenter() {
+function Tab4() {
+    const [text, setText] = useState('https://api.decade.tw/harmonics');
+
     return <>
         <Divider>ARGod Setup</Divider>
+        <Card
+            icon={<AaOutline  style={{ color: '#fff' }} />}
+            title={<div style={{ fontWeight: 'normal' }}>QR COde</div>}
+            extra={<RightOutline />}
+            onBodyClick={()=>{}}
+            onHeaderClick={()=>{}}
+            style={{ margin:'15px',borderRadius: '16px' }}
+        >
+            <Space direction={"vertical"}>
+                <QRCode style={{"backgroundColor":"white"}} value={text || '-'} />
+                <Input
+                    placeholder="-"
+                    maxLength={60}
+                    value={text}
+                    onChange={(e) => setText(e)}
+                />
+            </Space>
+        </Card>
 
         <List header='設定'>
-            <List.Item extra={<Switch defaultChecked/>}>ENABLE RX</List.Item>
-            <List.Item extra={<Switch defaultChecked/>}>ENABLE TX</List.Item>
+            <List.Item extra={<Switch defaultChecked/>}>ENABLE RX/TX</List.Item>
+
 
             <List.Item extra='https://api.decade.tw/harmonics/' clickable>
                 Vision of The Harmonics
@@ -430,7 +465,9 @@ function PersonalCenter() {
                 <Input placeholder='DECADE' clearable type='password'/>
             </Form.Item>
         </Form>
-        <Input placeholder='RemoteCommand' clearable/>
+        <TextArea warp placeholder='RemoteCommand' value={JSON.stringify(useStore().RX_JSON)} clearable>
+
+        </TextArea>
         {/*<ResultPage*/}
         {/*  status='success'*/}
         {/*  title='操作成功'*/}

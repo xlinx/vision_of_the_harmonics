@@ -49,7 +49,7 @@ export class WebsocketClientR {
 
       mqtt_client.on("message", (topic, message) => {
         // message is Buffer
-        console.log(new Date().toISOString(),"MY_ID",this.WSS_ID_RANDOM,"RX",message.toString());
+        // console.log(new Date().toISOString(),"MY_ID",this.WSS_ID_RANDOM,"RX",message.toString());
         this.callBack(message)
       });
 
