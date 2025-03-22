@@ -247,9 +247,9 @@ const back = () =>
 
 
 const colors = ['#ace0ff', '#bcffbd', '#e4fabd', '#ffcfac'];
-const imgss = ['https://i.imgur.com/obZ3VYq.png',
-    'https://i.imgur.com/LOid4rn.png',
-    'https://i.imgur.com/obZ3VYq.png',
+const imgss = ['https://i.imgur.com/pfM7bQf.png',
+    'https://i.imgur.com/V56jNyM.png',
+    'https://i.imgur.com/u7rA2rC.png',
     'https://i.imgur.com/LOid4rn.png']
 const items = colors.map((color, index) => (
     <Swiper.Item key={index}>
@@ -367,7 +367,7 @@ function Tab1() {
 
         <Card
             icon={<AaOutline style={{color: '#fff'}}/>}
-            title={<div style={{fontWeight: 'normal'}}>Vision of the Harmonics</div>}
+            title={<div style={{fontWeight: 'normal'}}>作品介紹 - 異象音列</div>}
             extra={<RightOutline/>}
             onBodyClick={() => {
             }}
@@ -376,9 +376,11 @@ function Tab1() {
             style={{margin: '15px', borderRadius: '16px'}}
         >
             <div>
-                作品介紹BRABRA
-                <Skeleton.Title animated/>
-                <Skeleton.Paragraph lineCount={8} animated/>
+                <Divider>Vision of the Harmonics</Divider>
+                此作品名為異象音列，在創作過程中研究3D列印機及步進馬達的機械噪音，整理出機器運作時，其機械噪音之音高的規律和限制。利用事先建模及編程的方式控制機械噪音，讓機器演奏大家耳熟能詳的經典樂句。觀看作品時，觀眾可在桌面上掃描QRCode，進入網站選取您喜歡的歌曲。
+                <Divider style={{borderColor: '#7cb305',borderStyle: 'dashed'}}></Divider>
+                過去的作品我都在試著挑戰音樂和聲音藝術的界線，當作品出現機械噪音、沒有音高時，狹義上會將作品歸類為聲音藝術。當作品有了音高、旋律、調性、曲式等等的這些規則，作品就被歸類到了音樂的範疇。那麼如果作品是機械噪音，同時演奏出了耳熟能詳的作品時，又該怎麼區別呢？又或者說，約翰凱基的4：33秒，長時間的寂靜無聲都可以是音樂，那大家認為的聲音藝術能不能是音樂呢？
+                {/*<Skeleton.Title animated/>*/}
             </div>
             <div className={{
                 'paddingTop': '11px',
@@ -390,7 +392,7 @@ function Tab1() {
             </div>
         </Card>
 
-        <Divider>Status Panel</Divider>
+        <Divider></Divider>
     </>)
 }
 
