@@ -49,7 +49,7 @@ const MQTT_OPTIONS_shiftr= {
     host:  "wss://vision-of-the-harmonics:rdGwsbIuoNx2sQin@vision-of-the-harmonics.cloud.shiftr.io"
 }
 const MQTT_OPTIONS_hivemq= {
-    host: "wss://xlinx:xlinxO13xlinx@184094d58f1e443fa48fc9f999bfe0de.s1.eu.hivemq.cloud:8884/mqtt",
+    host: "wss://YUJHENHUANG:Vv910404@56508c45f740420585b48a7a7e5333e7.s1.eu.hivemq.cloud:8884/mqtt",
 }
 const doremi = ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5']
 const synth = new Tone.Synth().toDestination();
@@ -195,7 +195,7 @@ function FpsDOM() {
         <span>
 
             {WSs_IDs.size >= 1 ? "✅" : "❌"} 遙控器人數:{WSs_IDs.size} |
-            {(Date.now() - RX_TS) > 2000 ? "❌" : "✅"}延遲 {(Date.now() - RX_TS) + "ms"}
+            {(Date.now() - RX_TS) > 2000 ? "❌" : "✅"}延遲 {(Date.now() - RX_TS) + "ms "+useStore.getState().MQTT_OPTIONS.host.split('@')[0].split(':')[1].replaceAll('//','')}
     </span>
     );
 };
