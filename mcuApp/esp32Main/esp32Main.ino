@@ -3,13 +3,13 @@
  #else
  #include <WiFi.h>
 #endif
-
+#include <ArduinoJson.h>
 #include <PubSubClient.h>
 #include <WiFiClientSecure.h>
 
 //---- WiFi settings
-const char* ssid = "s8";
-const char* password = "ssssssss";
+const char* ssid = "BUBU";
+const char* password = "29133824@";
 
 //---- MQTT Broker settings
 const char* mqtt_server = "56508c45f740420585b48a7a7e5333e7.s1.eu.hivemq.cloud"; // replace with your broker url
@@ -22,7 +22,7 @@ const int mqtt_port =8883;
 WiFiClientSecure espClient;   // for no secure connection use WiFiClient instead of WiFiClientSecure
 //WiFiClient espClient;
 PubSubClient client(espClient);
-unsigned long lastMsg = 0;
+
 
 #define MSG_BUFFER_SIZE	(50)
 char msg[MSG_BUFFER_SIZE];
@@ -42,7 +42,11 @@ const char* command1_topic="CMD";
 //const char* command1_topic="command2";
 
 
-
+unsigned long previousMillis = 0;
+unsigned long previousMillis300=0,previousMillis1000=0,previousMillis2000=0;
+int count_flashLED=0;
+int whichSong=0;
+StaticJsonDocument<512> doc;
 
 
 static const char *root_ca PROGMEM = R"EOF(
@@ -120,8 +124,50 @@ void reconnect() {
   }
 }
 
-//================================================ setup
-//================================================
+String splitX(String data, char separator, int index){
+    int found = 0;
+    int strIndex[] = { 0, -1 };
+    int maxIndex = data.length() - 1;
+    for (int i = 0; i <= maxIndex && found <= index; i++) {
+        if (data.charAt(i) == separator || i == maxIndex) {
+            found++;
+            strIndex[0] = strIndex[1] + 1;
+            strIndex[1] = (i == maxIndex) ? i+1 : i;
+        }
+    }
+    return found > index ? data.substring(strIndex[0], strIndex[1]) : "";
+}
+
+
+void parseJsonX(String inputXstr){
+  DeserializationError error = deserializeJson(doc, inputXstr);
+  JsonObject obj_Json = doc.as<JsonObject>();
+  if (error) {
+    Serial.print(F("deserializeJson() failed: "));
+    Serial.println(error.f_str());
+    return;
+  }
+  String CUE_STR=obj_Json[String("CUE")];
+  String CUE_STR_SONG=splitX(CUE_STR,'/',2);
+  String CUE_STR_WHICH=splitX(CUE_STR,'/',3); // /CUE/SONG/123
+  if(CUE_STR_SONG=="SONG" && CUE_STR_WHICH.length()>0){
+    whichSong=CUE_STR_WHICH.toInt();
+    count_flashLED=(whichSong+1)*2;
+    Serial.println(CUE_STR);
+  }
+    
+
+}
+void callback(char* topic, byte* payload, unsigned int length) {
+  String incommingMessage = "";
+  for (int i = 0; i < length; i++) incommingMessage+=(char)payload[i];
+
+  Serial.println("[][DECADE][RX]TOPIC="+String(topic)+", VAL="+incommingMessage);
+  if( strcmp(topic,command1_topic) == 0){
+     parseJsonX(incommingMessage);
+  }
+}
+
 void setup() {
   Serial.begin(115200);
   while (!Serial) delay(1);
@@ -138,53 +184,45 @@ void setup() {
   client.setServer(mqtt_server, mqtt_port);
   client.setCallback(callback);
 }
-
-
-//================================================ loop
-//================================================
-void loop() {
-
-  if (!client.connected()) reconnect();
-  client.loop();
-
-  //---- example: how to publish sensor values every 5 sec
-  unsigned long now = millis();
-  if (now - lastMsg > 2000) {
-    lastMsg = now;
-    sensor1= millis();       // replace the random value with your sensor value
-    // sensor2= 20+random(80);    // replace the random value  with your sensor value
-    publishMessage(sensor1_topic,"{\"CUE\":\"/cue/MCU/"+clientId+"/"+String(sensor1)+"\"}",true);
-    // publishMessage(sensor2_topic,String(sensor2),true);
-
-  }
-}
-
-//=======================================
-// This void is called every time we have a message from the broker
-
-void callback(char* topic, byte* payload, unsigned int length) {
-  String incommingMessage = "";
-  for (int i = 0; i < length; i++) incommingMessage+=(char)payload[i];
-
-  Serial.println("Message arrived ["+String(topic)+"]"+incommingMessage);
-
-  //--- check the incomming message
-    if( strcmp(topic,command1_topic) == 0){
-     if (incommingMessage.equals("1")) digitalWrite(BUILTIN_LED, LOW);   // Turn the LED on
-     else digitalWrite(BUILTIN_LED, HIGH);  // Turn the LED off
-  }
-
-   //  check for other commands
- /*  else  if( strcmp(topic,command2_topic) == 0){
-     if (incommingMessage.equals("1")) {  } // do something else
-  }
-  */
-}
-
-
-
-//======================================= publising as string
 void publishMessage(const char* topic, String payload , boolean retained){
   if (client.publish(topic, payload.c_str(), true))
       Serial.println("Message publised ["+String(topic)+"]: "+payload);
 }
+void send_heartBeat(){
+    publishMessage(sensor1_topic,"{\"CUE\":\"/cue/MCU/"+clientId+"/"+String(millis())+"\"}",true);
+}
+
+
+void flashLED_byTime(){
+  if(count_flashLED>=0){
+    digitalWrite(BUILTIN_LED, count_flashLED%2==0?HIGH:LOW);
+    count_flashLED--;
+  }
+}
+void loop_300ms(unsigned long now) {
+  if (now - previousMillis300 >= 100) {
+    previousMillis300 = now;
+    flashLED_byTime();
+  }
+}
+void loop_2000ms(unsigned long now) {
+  if (now - previousMillis2000 >= 2000) {
+    previousMillis2000 = now;
+    send_heartBeat();
+  }
+}
+void loop_1000ms(unsigned long now) {
+  if (now - previousMillis1000 >= 1000) {
+    previousMillis1000 = now;
+  }
+}
+void loop() {
+  if (!client.connected()) reconnect();
+    client.loop();
+
+  loop_300ms(millis());
+  loop_1000ms(millis());
+  loop_2000ms(millis());
+
+}
+
