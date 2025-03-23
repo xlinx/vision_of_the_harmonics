@@ -39,7 +39,18 @@ export class WebsocketClientR {
       //   console.log("[MQTT][on connect][hivemq]",this.maxReconnect);
       //   this.mqttX = mqtt.connect( this.WHERE);
       // }
-      this.mqttX = mqtt.connect( this.WHERE.host);
+      // if(this.WHERE.host.include(':')) {
+      //   let hostx=this.WHERE.host.split(':')
+      //   this.mqttX = mqtt.connect(hostx[0],parseInt(hostx[1]));
+      //   console.log("[MQTT][connect][usingPort]",hostx[0],parseInt(hostx[1]));
+      // }
+      // else
+        this.mqttX = mqtt.connect( this.WHERE.host);
+      // this.mqttX = mqtt.connect({
+      //   protocol: 'ws',
+      //   host: 'mqttgo.io',
+      //   port: 1883,
+      // });
 
       this.mqttX.on("connect", () => {
         console.log('[MQTT]Connected',this.WHERE.host);

@@ -51,6 +51,10 @@ const MQTT_OPTIONS_shiftr= {
 const MQTT_OPTIONS_hivemq= {
     host: "wss://YUJHENHUANG:Vv910404@56508c45f740420585b48a7a7e5333e7.s1.eu.hivemq.cloud:8884/mqtt",
 }
+const MQTT_OPTIONS_mqttgo= {
+    host: "ws://mqttgo.io:1883",
+}
+
 const doremi = ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5']
 const synth = new Tone.Synth().toDestination();
 
@@ -60,6 +64,10 @@ const useStore = create((set) => ({
     WhichSongIndex: -1,
     setWSs_IDs: (rx_id) => set((state) => ({count: state.WSs_IDs.add(rx_id)})),
     status_allJson_TS: 0,
+    MCU_ID:'',
+    MCU_TS:'',
+    MCU_ALIVE:false,
+    toggle_MCU_ALIVE: () => set((state) => ({MCU_ALIVE: !state.MCU_ALIVE})),
     chartDataFPS: [
         {year: '0:0:0', value: 0, type: 'fps'},
     ],
@@ -100,6 +108,12 @@ function on_msg_from_WSC(data) {
         if(J.hasOwnProperty('CUE')&&J['CUE'].split('/')[2]==='SONG'){
             let cued_song_index=parseInt(J['CUE'].split('/')[3])
             useStore.setState({WhichSongIndex: cued_song_index});
+        }else if(J.hasOwnProperty('CUE')&&J['CUE'].split('/')[2]==='MCU'){
+            let mcu_info=J['CUE'].split('/')
+            useStore.setState({MCU_ID: mcu_info[3]});
+            useStore.setState({MCU_TS: mcu_info[4]});
+            useStore.getState().toggle_MCU_ALIVE();
+
         }
 
     } catch (e) {
@@ -193,7 +207,7 @@ function FpsDOM() {
     // }
     return (
         <span>
-
+            {useStore.getState().MCU_ALIVE ? "🔼" : "🔽"} MCU {useStore.getState().MCU_ID}@{useStore.getState().MCU_TS} |
             {WSs_IDs.size >= 1 ? "✅" : "❌"} 遙控器人數:{WSs_IDs.size} |
             {(Date.now() - RX_TS) > 2000 ? "❌" : "✅"}延遲 {(Date.now() - RX_TS) + "ms "+useStore.getState().MQTT_OPTIONS.host.split('@')[0].split(':')[1].replaceAll('//','')}
     </span>
@@ -479,15 +493,16 @@ function Tab4() {
             }}
             style={{margin: '15px', borderRadius: '16px'}}
         >
-            <Space direction={"vertical"}>
+            {/*<Space direction={"vertical"}>*/}
                 <QRCode style={{"backgroundColor": "white"}} value={text || '-'}/>
                 <Input
+                    style={{width: '100%'}}
                     placeholder="-"
-                    maxLength={60}
+                    maxLength={160}
                     value={text}
                     onChange={(e) => setText(e)}
                 />
-            </Space>
+            {/*</Space>*/}
         </Card>
 
         <List header='設定'>
