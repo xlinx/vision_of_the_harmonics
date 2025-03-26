@@ -152,7 +152,7 @@ void parseJsonX(String inputXstr){
   String CUE_STR_WHICH=splitX(CUE_STR,'/',3); // /CUE/SONG/123
   if(CUE_STR_SONG=="SONG" && CUE_STR_WHICH.length()>0){
     whichSong=CUE_STR_WHICH.toInt();
-    count_flashLED=(whichSong+1)*2;
+    count_flashLED=(whichSong)*2;
     Serial.println(CUE_STR);
   }
     
@@ -189,7 +189,7 @@ void publishMessage(const char* topic, String payload , boolean retained){
       Serial.println("Message publised ["+String(topic)+"]: "+payload);
 }
 void send_heartBeat(){
-    publishMessage(sensor1_topic,"{\"CUE\":\"/cue/MCU/"+clientId+"/"+String(millis())+"\"}",true);
+    publishMessage(sensor1_topic,"{\"CUE\":\"/cue/MCU/"+clientId+"/"+String(millis()/1000)+"\"}",true);
 }
 
 
@@ -197,6 +197,9 @@ void flashLED_byTime(){
   if(count_flashLED>=0){
     digitalWrite(BUILTIN_LED, count_flashLED%2==0?HIGH:LOW);
     count_flashLED--;
+  }else{
+      digitalWrite(BUILTIN_LED, LOW);
+
   }
 }
 void loop_300ms(unsigned long now) {

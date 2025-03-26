@@ -181,7 +181,7 @@ function ButtonRC() {
                 '--color': 'var(--adm-color-primary)',
 
             }}
-                      value={[useStore.getState().WhichSongIndex]}
+                      defaultValue={[useStore.getState().WhichSongIndex]}
                       columns={2}
                       multiple={false}
                       showCheckMark={true}
