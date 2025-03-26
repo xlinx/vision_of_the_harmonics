@@ -182,7 +182,7 @@ function ButtonRC() {
 
             }}
                       value={[useStore.getState().WhichSongIndex]}
-                      columns={1}
+                      columns={2}
                       multiple={false}
                       showCheckMark={true}
                       options={
@@ -336,20 +336,21 @@ function App() {
 
                 <Swiper
                     loop
+                    // direction={'vertical'}
                     autoplay
                     onIndexChange={i => {
                         // console.log(i, 'onIndexChange1')
                     }}
                     style={{
-                        '--border-radius': '81px',
+                        '--border-radius': '22px','--height': '150px'
                     }}
                 >
                     ${argod_fps.fps}
                     {items}
                 </Swiper>
-                <NoticeBar content={<Marquee gradient={false}>
-                    Vision of The Harmonics {' | ' + useStore().Songs.join(' | ')}
-                </Marquee>} color='gray'/>
+                {/*<NoticeBar content={<Marquee gradient={false}>*/}
+                {/*    Vision of The Harmonics {' | ' + useStore().Songs.join(' | ')}*/}
+                {/*</Marquee>} color='gray'/>*/}
 
 
                 <Routes>
@@ -506,7 +507,7 @@ function Tab4() {
         </Card>
 
         <List header='設定'>
-            <List.Item extra={<Switch defaultChecked/>}>ENABLE RX/TX</List.Item>
+            {/*<List.Item extra={<Switch defaultChecked/>}>ENABLE RX/TX</List.Item>*/}
 
 
             <List.Item extra='https://api.decade.tw/harmonics/' clickable>
@@ -514,12 +515,14 @@ function Tab4() {
             </List.Item>
 
         </List>
-        <Form layout='vertical'>
+        {/*<Form layout='vertical'>*/}
 
-            <Form.Item label='AccessToken' name='password'>
-                <Input placeholder='DECADE' clearable type='password'/>
-            </Form.Item>
-        </Form>
+        {/*    <Form.Item label='AccessToken' name='password'>*/}
+        {/*    <Input placeholder='DECADE' clearable type='password'/>*/}
+        {/*</Form.Item>*/}
+        {/*</Form>*/}
+        <Divider>Server(Tokyo@AWS) Log</Divider>
+
         <TextArea warp placeholder='RemoteCommand' value={JSON.stringify(useStore().RX_JSON)} clearable>
 
         </TextArea>
