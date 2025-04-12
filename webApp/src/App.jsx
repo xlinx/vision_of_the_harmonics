@@ -59,7 +59,11 @@ const synth = new Tone.Synth().toDestination();
 const useStore = create((set) => ({
     RX_JSON: {}, RX_TS: 0, WSs_IDs: new Set(),
     Songs: ['望春風', '蝴蝶', '造飛機', '三輪車跑得快', '野玫瑰', '鱒魚', '倫敦鐵橋垮下來', '歡樂頌'],
-    WhichSongIndex: -1,
+    WhichDeskIndex: 'A',
+    WhichSongIndex: '0',
+    setWhichDeskIndex:(by) => set({WhichDeskIndex: by}),
+    setWhichSongIndex:(by) => set({WhichSongIndex: by}),
+
     setWSs_IDs: (rx_id) => set((state) => ({count: state.WSs_IDs.add(rx_id)})),
     status_allJson_TS: 0,
     MCU_ID:'',
@@ -104,8 +108,21 @@ function on_msg_from_WSC(data) {
         useStore.setState({RX_TS: Date.now()});
         useStore.getState().increaseFPSchart();
         if(J.hasOwnProperty('CUE')&&J['CUE'].split('/')[2]==='SONG'){
-            let cued_song_index=parseInt(J['CUE'].split('/')[3])
-            useStore.setState({WhichSongIndex: cued_song_index});
+            try{
+                let str=(J['CUE'].split('/')[3])
+                let regexABC = str.match(/([A-C])/gm)
+                let regex19 = str.match(/([0-9])/gm)
+
+                if (regexABC===null||regexABC===undefined||regex19===null||regex19===undefined)
+                    return
+
+                console.log('[][from-remote-control][sync]',regexABC[0],regex19[0])
+                useStore.setState({WhichDeskIndex:  regexABC[0]});
+                useStore.setState({WhichSongIndex:  regex19[0]});
+            }catch (e1) {
+                console.error("[X][RC][on_msg_from_WSC]",e1)
+            }
+            
         }else if(J.hasOwnProperty('CUE')&&J['CUE'].split('/')[2]==='MCU'){
             let mcu_info=J['CUE'].split('/')
             useStore.setState({MCU_ID: mcu_info[3]});
@@ -144,29 +161,33 @@ function clock1000() {
     }
 }
 
-function handleClickRC(e,tableABC) {
-    // let index=useStore.getState().Songs.findIndex((w)=>{return w===e[0]})
-    let index = parseInt(e[0])
-    console.log("[handleClickRC]", e, index);
-    useStore.setState({WhichSongIndex: index});
+// function handleClickRC(e) {
+//     // let index=useStore.getState().Songs.findIndex((w)=>{return w===e[0]})
+//     const { WhichSongIndex,setWhichSongIndex } = useStore()
+//
+//     let index = (e[0])
+//     console.log("[handleClickRC]", e, index);
+//     // useStore.setState({WhichSongIndex: index});
+//     setWhichSongIndex(index)
+//     let d = {
+//         CUE: "/CUE/SONG/" + useStore.getState().WhichDeskIndex+index,
+//         WHO: "RC",
+//         ID: WSS_ID_RANDOM,
+//         TS: Date.now(),
+//     };
+//     console.log("[handleClickRC]", d);
+//     let j = JSON.stringify(d);
+//     websocketClientR.sendMsgX(j);
+//     synth.triggerAttackRelease(doremi[index], "8n");
+// }
 
-    let d = {
-        CUE: "/CUE/SONG/" + tableABC+index,
-        WHO: "RC",
-        ID: WSS_ID_RANDOM,
-        TS: Date.now(),
-    };
-    console.log("[handleClickRC]", d);
-    let j = JSON.stringify(d);
-    websocketClientR.sendMsgX(j);
-    synth.triggerAttackRelease(doremi[index], "8n");
-}
-
-function ButtonRC({tableABC}) {
+function ButtonRC() {
     // constructor(props) {
     //     super(props);
     //     this.state = ({props: props, clickCount: 0})
     // }
+    const { WhichSongIndex,setWhichSongIndex } = useStore()
+
     return (
         <>
             {/*// <Button style={{'width': '99%'}} size={"large"} onClick={this.handleClickRC} color={this.props.color} fill={this.props.fill} shape={this.props.shape}>*/}
@@ -180,16 +201,34 @@ function ButtonRC({tableABC}) {
                 '--color': 'var(--adm-color-primary)',
 
             }}
-                      defaultValue={[useStore.getState().WhichSongIndex]}
+                      defaultValue={[WhichSongIndex]}
+                      value={WhichSongIndex}
                       columns={2}
                       multiple={false}
                       showCheckMark={true}
                       options={
                           useStore.getState().Songs.map((e, index) => {
-                                  return {label: e, value: index}
+                                  return {label: e, value: index+''}
                               }
                           )}
-                      onChange={(e) => handleClickRC(e,tableABC)}>
+                      onChange={(e) => {
+                          // let index=useStore.getState().Songs.findIndex((w)=>{return w===e[0]})
+
+                          let index = (e[0])
+                          console.log("[handleClickRC]", e, index);
+                          // useStore.setState({WhichSongIndex: index});
+                          setWhichSongIndex(index)
+                          let d = {
+                              CUE: "/CUE/SONG/" + useStore.getState().WhichDeskIndex+index,
+                              WHO: "RC",
+                              ID: WSS_ID_RANDOM,
+                              TS: Date.now(),
+                          };
+                          console.log("[handleClickRC]", d);
+                          let j = JSON.stringify(d);
+                          websocketClientR.sendMsgX(j);
+                          synth.triggerAttackRelease(doremi[index], "8n");
+                      }}>
 
             </Selector>
         </>
@@ -398,7 +437,8 @@ function Tab1() {
 }
 
 function Tab2() {
-    const [tableABC,setTableABC] = useState('A')
+    const { WhichDeskIndex,setWhichDeskIndex } = useStore()
+
     return <>
         <FpsDOM/>
 
@@ -418,27 +458,30 @@ function Tab2() {
             <Selector
                 options={[
                     {
-                        label: 'Desk A',
+                        label: '桌子 A',
                         value: 'A',
                     },
                     {
-                        label: 'Desk B',
+                        label: '桌子 B',
                         value: 'B',
                     },
                     {
-                        label: 'Desk C',
+                        label: '桌子 C',
                         value: 'C',
                     },
                 ]}
-                defaultValue={[tableABC]}
+                defaultValue={[WhichDeskIndex]}
+                value={WhichDeskIndex}
                 onChange={(arr, extend) => {
                     console.log(arr, extend.items)
-                    setTableABC(arr[0])
+                    // useStore.setState({WhichDeskIndex: arr[0]});
+                    setWhichDeskIndex(arr[0])
+
                 }}
             />
             <Grid columns={1} gap={10}>
 
-                <ButtonRC tableABC={tableABC}/>
+                <ButtonRC />
                 {/*{Songs.map((item, index) => {*/}
                 {/*        return <ButtonRC color='primary' key={'key_'+item} showText={item} id={'song_' + index}/>*/}
                 {/*    }*/}
