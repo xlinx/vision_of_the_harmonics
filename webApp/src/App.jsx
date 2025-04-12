@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from 'react'
+import React, {useState} from 'react'
 import {create} from 'zustand';
 import {Route, Routes, useLocation, useNavigate,} from 'react-router-dom'
 import {
@@ -29,7 +29,6 @@ import {
     UnorderedListOutline,
     UserOutline,
 } from 'antd-mobile-icons'
-import Marquee from 'react-fast-marquee';
 import {Line} from "@ant-design/charts";
 import {WebsocketClientR} from "./WebsocketClientR.js";
 import * as Tone from "tone";
@@ -44,7 +43,6 @@ const keyboardShortcuts = KeyboardShortcuts.create({
     lastNote: lastNote,
     keyboardConfig: KeyboardShortcuts.HOME_ROW,
 });
-const aaa={a:'',aa:''};
 const MQTT_OPTIONS_shiftr= {
     host:  "wss://vision-of-the-harmonics:rdGwsbIuoNx2sQin@vision-of-the-harmonics.cloud.shiftr.io"
 }
@@ -146,24 +144,25 @@ function clock1000() {
     }
 }
 
-function handleClickRC(e) {
+function handleClickRC(e,tableABC) {
     // let index=useStore.getState().Songs.findIndex((w)=>{return w===e[0]})
     let index = parseInt(e[0])
     console.log("[handleClickRC]", e, index);
     useStore.setState({WhichSongIndex: index});
 
     let d = {
-        CUE: "/CUE/SONG/" + index,
+        CUE: "/CUE/SONG/" + tableABC+index,
         WHO: "RC",
         ID: WSS_ID_RANDOM,
         TS: Date.now(),
     };
+    console.log("[handleClickRC]", d);
     let j = JSON.stringify(d);
     websocketClientR.sendMsgX(j);
     synth.triggerAttackRelease(doremi[index], "8n");
 }
 
-function ButtonRC() {
+function ButtonRC({tableABC}) {
     // constructor(props) {
     //     super(props);
     //     this.state = ({props: props, clickCount: 0})
@@ -190,7 +189,7 @@ function ButtonRC() {
                                   return {label: e, value: index}
                               }
                           )}
-                      onChange={(e) => handleClickRC(e)}>
+                      onChange={(e) => handleClickRC(e,tableABC)}>
 
             </Selector>
         </>
@@ -313,20 +312,7 @@ function App() {
         'dark'
     );
     const [argod_fps] = useState({fps: -1, x: 0, y: 0});
-    const RadioMode = () => {
-        const [value, setValue] = useState('1')
-        return (
-            <Selector
-                options={options}
-                value={[value]}
-                onChange={v => {
-                    if (v.length) {
-                        setValue(v[0])
-                    }
-                }}
-            />
-        )
-    }
+
     return (
         <>
             <div className={'app2'}>
@@ -338,9 +324,9 @@ function App() {
                     loop
                     // direction={'vertical'}
                     autoplay
-                    onIndexChange={i => {
-                        // console.log(i, 'onIndexChange1')
-                    }}
+                    // onIndexChange={(i) => {
+                    //     console.log(i, 'onIndexChange1')
+                    // }}
                     style={{
                         '--border-radius': '22px','--height': '150px'
                     }}
@@ -412,7 +398,7 @@ function Tab1() {
 }
 
 function Tab2() {
-
+    const [tableABC,setTableABC] = useState('A')
     return <>
         <FpsDOM/>
 
@@ -428,24 +414,47 @@ function Tab2() {
             }}
             style={{margin: '15px', borderRadius: '16px'}}
         >
+            <Space direction="vertical" style={{width:'100%'}}>
+            <Selector
+                options={[
+                    {
+                        label: 'Desk A',
+                        value: 'A',
+                    },
+                    {
+                        label: 'Desk B',
+                        value: 'B',
+                    },
+                    {
+                        label: 'Desk C',
+                        value: 'C',
+                    },
+                ]}
+                defaultValue={[tableABC]}
+                onChange={(arr, extend) => {
+                    console.log(arr, extend.items)
+                    setTableABC(arr[0])
+                }}
+            />
             <Grid columns={1} gap={10}>
 
-                <ButtonRC/>
+                <ButtonRC tableABC={tableABC}/>
                 {/*{Songs.map((item, index) => {*/}
                 {/*        return <ButtonRC color='primary' key={'key_'+item} showText={item} id={'song_' + index}/>*/}
                 {/*    }*/}
                 {/*)}*/}
 
             </Grid>
+            </Space>
         </Card>
         <Divider contentPosition='right'> </Divider>
         <Piano
             noteRange={{first: firstNote, last: lastNote}}
             playNote={(midiNumber) => {
-                // Play a given note - see notes below
+                console.log(midiNumber)
             }}
             stopNote={(midiNumber) => {
-                // Stop playing a given note - see notes below
+                console.log(midiNumber)
             }}
             // widthth={"100%"}
 
