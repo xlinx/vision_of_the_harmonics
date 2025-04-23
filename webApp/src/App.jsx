@@ -36,6 +36,7 @@ import 'react-piano/dist/styles.css';
 import {Piano, KeyboardShortcuts, MidiNumbers} from 'react-piano';
 import {QRCode} from 'antd';
 import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from "@vercel/speed-insights/react"
 
 const firstNote = MidiNumbers.fromNote('c3');
 const lastNote = MidiNumbers.fromNote('f5');
@@ -396,6 +397,7 @@ function App() {
                     {/*</div>*/}
                 </FloatingPanel>
                 <Analytics />
+                <SpeedInsights />
 
             </div>
 
