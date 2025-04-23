@@ -35,6 +35,7 @@ import * as Tone from "tone";
 import 'react-piano/dist/styles.css';
 import {Piano, KeyboardShortcuts, MidiNumbers} from 'react-piano';
 import {QRCode} from 'antd';
+import { Analytics } from '@vercel/analytics/react';
 
 const firstNote = MidiNumbers.fromNote('c3');
 const lastNote = MidiNumbers.fromNote('f5');
@@ -394,6 +395,8 @@ function App() {
                     {/*</Link>*/}
                     {/*</div>*/}
                 </FloatingPanel>
+                <Analytics />
+
             </div>
 
         </>
@@ -446,7 +449,7 @@ function Tab2() {
         {/*<Divider contentPosition='right'>今天想聽點甚麼呢?<HistogramOutline fontSize={22}/> </Divider>*/}
         <Card
             icon={<AaOutline style={{color: '#fff'}}/>}
-            title={<div style={{fontWeight: 'normal'}}>今天想聽點甚麼呢?</div>}
+            title={<div style={{fontWeight: 'normal'}}>今天想聽點甚麼呢xxxyyy?</div>}
             extra={<RightOutline/>}
             onBodyClick={() => {
             }}
