@@ -12,6 +12,7 @@
   "dependencies": {
     "@ant-design/charts": "^2.2.7",
     "@vercel/analytics": "^1.5.0",
+    "@vercel/speed-insights": "^1.2.0",
     "antd": "^5.24.4",
     "antd-mobile": "^5.39.0",
     "antd-mobile-icons": "^0.3.0",
